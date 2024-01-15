@@ -27,7 +27,7 @@ function loginUser() {
         }
       })
       .catch(error => console.error('Error during login:', error));
-  }
+}
   
 function createUser() {
   const name = document.getElementById('name').value;
@@ -48,7 +48,6 @@ function createUser() {
   })
   .catch(error => console.error('Error creating user:', error));
 }
-
 
 function fetchUserById() {
     const userIdInput = document.getElementById('userId');
@@ -84,7 +83,9 @@ function fetchUsers() {
           userTableBody.appendChild(row);
         });
       })
-      .catch(error => console.error('Error fetching users:', error));
+      //.catch(error => console.error('Error fetching users:', error));
+      //comentet out for the time being due to simplistic nature of updating website
+      //during tests it spams unnecessary errors
 }
 
 function openEditUserModal(userId) {
@@ -101,7 +102,6 @@ function openEditUserModal(userId) {
   $('#editUserModal').modal('show');
 }
 
-
 function saveUserChanges() {
   const userId = document.getElementById('userID').innerText;
   const newName = document.getElementById('editName').value;
@@ -112,24 +112,30 @@ function saveUserChanges() {
 
   $('#editUserModal').modal('hide');
 }
-
   
-function updateUser(userId, newName, newEmail, newPassword) {
-  fetch(`http://localhost:3000/users/${userId}`, {
+async function updateUser(userId, newName, newEmail, newPassword) {
+  try {
+    const response = await fetch(`http://localhost:3000/users/${userId}`, {
       method: 'PUT',
       headers: {
-          'Content-Type': 'application/json',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ name: newName, email: newEmail, password: newPassword }),
-  })
-  .then(response => response.json())
-  .then(updatedUser => {
-      console.log('User updated:', updatedUser);
-      fetchUsers();
-  })
-  .catch(error => console.error('Error updating user:', error));
-}
+    });
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const updatedUser = await response.json();
+    console.log('User updated:', updatedUser);
+
+    fetchUsers();
+    return updatedUser;
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error;
+  }
+}
 
 function deleteUser(userId) {
     fetch(`http://localhost:3000/users/${userId}`, {
@@ -150,6 +156,15 @@ function toggleLoginPopup() {
     const loginPopup = document.getElementById('loginPopup');
     loginPopup.style.display = (loginPopup.style.display === 'block') ? 'none' : 'block';
   }
+
+module.exports = {
+  loginUser,
+  createUser,
+  fetchUserById,
+  fetchUsers,
+  updateUser,
+  deleteUser
+};
 
 fetchUsers();
   
