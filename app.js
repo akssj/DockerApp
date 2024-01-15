@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const { Pool } = require('pg');
+const bcrypt = require('bcrypt');
 
 const app = express();
 const PORT = 3000;
@@ -27,9 +28,14 @@ app.post('/login', async (req, res) => {
 
   try {
     const result = await pool.query('SELECT * FROM users WHERE name = $1', [name]);
-
     if (result.rows.length > 0) {
-      res.json({ success: true });
+      const user = result.rows[0];
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      if (passwordMatch) {
+        res.json({ success: true });
+      } else {
+        res.json({ success: false, message: 'Invalid password' });
+      }
     } else {
       res.json({ success: false, message: 'Invalid name' });
     }
@@ -68,9 +74,10 @@ app.get('/users/:id', async (req, res) => {
 
 // creating a new user
 app.post('/users', async (req, res) => {
-  const { name, email } = req.body;
+  const { name, email, password } = req.body;
   try {
-    const result = await pool.query('INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *', [name, email]);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await pool.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *', [name, email, hashedPassword]);
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Error executing query', error);
@@ -81,9 +88,10 @@ app.post('/users', async (req, res) => {
 // updating a user
 app.put('/users/:id', async (req, res) => {
   const userId = req.params.id;
-  const { name, email } = req.body;
+  const { name, email, password } = req.body;
   try {
-    const result = await pool.query('UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING *', [name, email, userId]);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await pool.query('UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4 RETURNING *', [name, email, hashedPassword, userId]);
     if (result.rows.length === 0) {
       res.status(404).json({ error: 'User not found' });
     } else {

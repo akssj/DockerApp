@@ -1,6 +1,6 @@
 function loginUser() {
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
+    const usernameInput = document.getElementById('popup_username');
+    const passwordInput = document.getElementById('popup_password');
     const name = usernameInput.value;
     const password = passwordInput.value;
   
@@ -30,23 +30,25 @@ function loginUser() {
   }
   
 function createUser() {
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-  
-    fetch('http://localhost:3000/users', {
+  const name = document.getElementById('name').value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+
+  fetch('http://localhost:3000/users', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+          'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, email }),
-    })
-      .then(response => response.json())
-      .then(() => {
-        console.log('User created');
-        fetchUsers();
-      })
-      .catch(error => console.error('Error creating user:', error));
+      body: JSON.stringify({ name, email, password }),
+  })
+  .then(response => response.json())
+  .then(() => {
+      console.log('User created');
+      fetchUsers();
+  })
+  .catch(error => console.error('Error creating user:', error));
 }
+
 
 function fetchUserById() {
     const userIdInput = document.getElementById('userId');
@@ -85,44 +87,49 @@ function fetchUsers() {
       .catch(error => console.error('Error fetching users:', error));
 }
 
-  function openEditUserModal(userId) {
-    fetch(`http://localhost:3000/users/${userId}`)
-      .then(response => response.json())
-      .then(user => {
-        document.getElementById('userID').innerText = user.id;
-        document.getElementById('editName').value = user.name;
-        document.getElementById('editEmail').value = user.email;
-      })
-      .catch(error => console.error('Error fetching user by ID:', error));
+function openEditUserModal(userId) {
+  fetch(`http://localhost:3000/users/${userId}`)
+    .then(response => response.json())
+    .then(user => {
+      document.getElementById('userID').innerText = user.id;
+      document.getElementById('editName').value = user.name;
+      document.getElementById('editEmail').value = user.email;
+      document.getElementById('editPassword').value = '';
+    })
+    .catch(error => console.error('Error fetching user by ID:', error));
 
-    $('#editUserModal').modal('show');
+  $('#editUserModal').modal('show');
 }
+
 
 function saveUserChanges() {
-    const userId = document.getElementById('userID').innerText;
-    const newName = document.getElementById('editName').value;
-    const newEmail = document.getElementById('editEmail').value;
+  const userId = document.getElementById('userID').innerText;
+  const newName = document.getElementById('editName').value;
+  const newEmail = document.getElementById('editEmail').value;
+  const newPassword = document.getElementById('editPassword').value;
 
-    updateUser(userId, newName, newEmail);
+  updateUser(userId, newName, newEmail, newPassword);
 
-    $('#editUserModal').modal('hide');
+  $('#editUserModal').modal('hide');
 }
+
   
-function updateUser(userId, newName, newEmail) {
-    fetch(`http://localhost:3000/users/${userId}`, {
+function updateUser(userId, newName, newEmail, newPassword) {
+  fetch(`http://localhost:3000/users/${userId}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
+          'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name: newName, email: newEmail }),
-    })
-      .then(response => response.json())
-      .then(updatedUser => {
-        console.log('User updated:', updatedUser);
-        fetchUsers();
-      })
-      .catch(error => console.error('Error updating user:', error));
+      body: JSON.stringify({ name: newName, email: newEmail, password: newPassword }),
+  })
+  .then(response => response.json())
+  .then(updatedUser => {
+      console.log('User updated:', updatedUser);
+      fetchUsers();
+  })
+  .catch(error => console.error('Error updating user:', error));
 }
+
 
 function deleteUser(userId) {
     fetch(`http://localhost:3000/users/${userId}`, {
