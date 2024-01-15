@@ -5,7 +5,7 @@ Simple app for user managment, consists of two containers(nodeapp and postgresql
 
 create, delete, modify, get by id or all users.
 
-Simple login(it just sets var in local storage to true if user exists).
+Simple login.
 
 ## Tech
 node js, js, html, css, postgresql, sql, docker
