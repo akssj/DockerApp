@@ -1,27 +1,30 @@
-version: '3'
+version: '3.8'
 
 services:
-  postgres:
-    image: postgres:latest
+  mysql:
+    image: mariadb:10.6.4-focal
     environment:
-      POSTGRES_DB: your_database
-      POSTGRES_USER: your_username
-      POSTGRES_PASSWORD: your_password
+      MYSQL_DATABASE: your_database
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: your_username
+      MYSQL_PASSWORD: your_password
     ports:
-      - "5432:5432"
+      - 3306:3306
     networks:
       - mynetwork
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: always
 
   nodeapp:
     build: .
     depends_on:
-      - postgres
+      - mysql
     ports:
-      - "3000:3000"
+      - 8080:8080
     networks:
       - mynetwork
+    restart: always
 
 networks:
   mynetwork:
