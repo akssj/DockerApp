@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Management</title>
+  
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script src="frontend.js" defer></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <div class="container mt-4">
+
+    <button id="loginButton" class="btn btn-primary" onclick="toggleLoginPopup()">Login</button>
+
+    <h1 class="mb-4">User Management</h1>
+    <form id="createUserForm">
+      <div class="form-row align-items-end">
+        <div class="col-md-4 mb-3">
+          <label for="name">Name:</label>
+          <input type="text" class="form-control" id="name" required>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="email">Email:</label>
+          <input type="email" class="form-control" id="email" required>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="password">Password:</label>
+          <input type="password" class="form-control" id="password" required>
+        </div>
+        <div class="col-md-4 mb-3">
+          <button type="button" class="btn btn-primary" onclick="createUser()">Create User</button>
+        </div>
+      </div>
+    </form>
+
+    <hr>
+
+    <table class="table">
+
+      <div class="form-row align-items-end">
+        <div class="col-md-4 mb-3">
+          <h2 class="mt-4">User List</h2>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+          <input type="text" class="form-control" id="userId" placeholder="Search by ID">
+        </div>
+      
+        <div class="col-md-4 mb-3">
+          <button type="button" class="btn btn-info" onclick="fetchUserById()">Search</button>
+        </div>
+      </div>
+
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="userTableBody"></tbody>
+    </table>
+
+</div>
+
+<!-- Login popup using Bootstrap -->
+<div id="loginPopup" class="container bg-light">
+  <form id="loginForm">
+    <div class="form-group">
+      <label for="username">Username:</label>
+      <input type="text" class="form-control" id="popup_username" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Password:</label>
+      <input type="password" class="form-control" id="popup_password" required>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="loginUser()">Login</button>
+    <button type="button" class="btn btn-secondary" onclick="toggleLoginPopup()">Close</button>
+  </form>
+</div>
+
+<!-- user info popup -->
+<div id="userInfoModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="userInfoModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="userInfoModalLabel">User Information</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="userInfoModalBody"></div>
+    </div>
+  </div>
+</div>
+
+<!-- user edit popup -->
+<div class="modal fade" id="editUserModal" tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editUserModalLabel">Edit User Information</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="editUserForm">
+          <div class="form-group">
+            <label for="userID">ID:</label>
+            <div id="userID"></div>
+          </div>
+          <div class="form-group">
+            <label for="editName">Name:</label>
+            <input type="text" class="form-control" id="editName" required>
+          </div>
+          <div class="form-group">
+            <label for="editEmail">Email:</label>
+            <input type="email" class="form-control" id="editEmail" required>
+          </div>
+          <div class="form-group">
+            <label for="editPassword">New Password:</label>
+            <input type="password" class="form-control" id="editPassword">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="saveUserChanges()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>
+
+</html>
