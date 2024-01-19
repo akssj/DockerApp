@@ -15,7 +15,7 @@ node js, js, html, css, mysql, docker
 docker compose up
 ```
 
-[http://localhost:3000](http://localhost:3000)
+[http://localhost:3000](http://localhost:8080)
 
 ## Credist
 Me aka Radosław Czyżowicz 40357
