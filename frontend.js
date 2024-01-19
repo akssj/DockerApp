@@ -6,7 +6,7 @@ function loginUser() {
   
     const loginData = { name, password };
 
-    fetch('http://localhost:3000/login', {
+    fetch('http://localhost:8080/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -30,25 +30,28 @@ function loginUser() {
   }
   
 function createUser() {
-  const name = document.getElementById('name').value;
+  const name = document.getElementById('username').value;
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
 
   const userData = { name, email, password };
 
-  fetch('http://localhost:3000/users', {
+  fetch('http://localhost:8080/users', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json',
       },
       body: JSON.stringify(userData),
   })
-  .then(response => response.json())
-  .then(() => {
-      console.log('User created');
-      fetchUsers();
-  })
-  .catch(error => console.error('Error creating user:', error));
+  .then(response => {
+    if (response.status === 201) {
+        console.log('User created');
+        fetchUsers();
+    } else {
+        console.error('Error creating user. Server responded with:', response.status);
+    }
+})
+.catch(error => console.error('Error creating user:', error));
 }
 
 
@@ -56,7 +59,7 @@ function fetchUserById() {
     const userIdInput = document.getElementById('userId');
     const userId = parseInt(userIdInput.value, 10);
 
-    fetch(`http://localhost:3000/users/${userId}`)
+    fetch(`http://localhost:8080/users/${userId}`)
       .then(response => response.json())
       .then(user => {
         window.alert(`User Information:\nID: ${user.id}\nName: ${user.name}\nEmail: ${user.email}`);
@@ -66,31 +69,41 @@ function fetchUserById() {
 }
   
 function fetchUsers() {
-    fetch('http://localhost:3000/users')
-      .then(response => response.json())
-      .then(users => {
-        const userTableBody = document.getElementById('userTableBody');
-        userTableBody.innerHTML = '';
-  
-        users.forEach(user => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${user.id}</td>
-            <td>${user.name}</td>
-            <td>${user.email}</td>
-            <td>
-              <button type="button" class="btn btn-danger" onclick="deleteUser(${user.id})">Delete</button>
-              <button type="button" class="btn btn-info" onclick="openEditUserModal(${user.id})">Modify</button>
-            </td>
-          `;
-          userTableBody.appendChild(row);
-        });
-      })
-      .catch(error => console.error('Error fetching users:', error));
+  fetch('http://localhost:8080/users')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(users => {
+      if (!Array.isArray(users)) {
+        throw new Error('Invalid response format. Users is not an array.');
+      }
+
+      const userTableBody = document.getElementById('userTableBody');
+      userTableBody.innerHTML = '';
+
+      users.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${user.id}</td>
+          <td>${user.name}</td>
+          <td>${user.email}</td>
+          <td>
+            <button type="button" class="btn btn-danger" onclick="deleteUser(${user.id})">Delete</button>
+            <button type="button" class="btn btn-info" onclick="openEditUserModal(${user.id})">Modify</button>
+          </td>
+        `;
+        userTableBody.appendChild(row);
+      });
+    })
+    .catch(error => console.error('Error fetching users:', error.message));
 }
 
+
 function openEditUserModal(userId) {
-  fetch(`http://localhost:3000/users/${userId}`)
+  fetch(`http://localhost:8080/users/${userId}`)
     .then(response => response.json())
     .then(user => {
       document.getElementById('userID').innerText = user.id;
@@ -117,7 +130,7 @@ function saveUserChanges() {
 
   
 function updateUser(userId, newName, newEmail, newPassword) {
-  fetch(`http://localhost:3000/users/${userId}`, {
+  fetch(`http://localhost:8080/users/${userId}`, {
       method: 'PUT',
       headers: {
           'Content-Type': 'application/json',
@@ -134,7 +147,7 @@ function updateUser(userId, newName, newEmail, newPassword) {
 
 
 function deleteUser(userId) {
-    fetch(`http://localhost:3000/users/${userId}`, {
+    fetch(`http://localhost:8080/users/${userId}`, {
       method: 'DELETE',
     })
       .then(response => {
