@@ -20,6 +20,7 @@ pool.query = util.promisify(pool.query).bind(pool);
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// retry database connection until succeed
 function initializeApp() {
   pool.getConnection((err, connection) => {
     if (err) {
