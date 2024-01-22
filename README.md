@@ -8,14 +8,14 @@ create, delete, modify, get by id or all users.
 Simple login.
 
 ## Tech
-node js, js, html, css, mysql, docker
+node js, js, html, css, mariadb, docker
 
 ## Launch
 ```sh
 docker compose up
 ```
 
-[http://localhost:3000](http://localhost:8080)
+[http://localhost:8080](http://localhost:8080)
 
 ## Credist
 Me aka Radosław Czyżowicz 40357
