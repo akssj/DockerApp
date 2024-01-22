@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mysql:
-    image: mysql:8.2.0
+    image: mariadb:10.6.4-focal
     environment:
       MYSQL_DATABASE: your_database
       MYSQL_ROOT_PASSWORD: root
@@ -14,7 +14,7 @@ services:
       - mynetwork
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    restart: unless-stopped
+    restart: always
 
   nodeapp:
     build: .
@@ -24,7 +24,7 @@ services:
       - 8080:8080
     networks:
       - mynetwork
-    restart: unless-stopped
+    restart: always
 
 networks:
   mynetwork:
