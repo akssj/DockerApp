@@ -1,101 +1,142 @@
 const express = require('express');
 const path = require('path');
-const { Pool } = require('pg');
-const bcrypt = require('bcrypt');
+const mysql = require('mysql');
+const util = require('util');
 
 const app = express();
-const PORT = 3000;
+const PORT = 8080;
 
-const pool = new Pool({
-  user: 'your_username',
-  host: 'postgres',
+const pool = mysql.createPool({
+  user: 'root',
+  host: 'mysql',
   database: 'your_database',
-  password: 'your_password',
-  port: 5432,
+  password: 'root',
+  port: 3306,
+  insecureAuth : true
 });
+
+pool.query = util.promisify(pool.query).bind(pool);
 
 app.use(express.json());
-
 app.use(express.static(__dirname));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// retry database connection until succeed
+function initializeApp() {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Database connection failed:', err, ' retryin in 10sec');
+      setTimeout(initializeApp, 10000);
+    } else {
+      console.log('Database connected successfully');
+      connection.release();
+      startServer();
+    }
+  });
+}
+
+function startServer() {
+
+  pool.query(`CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL
+  )`, (err, result) => {
+    if (err) {
+      console.error('Error creating users table:', err);
+    }else {
+      console.log('Table Created successfully');
+    }
   });
 
-// fake login
-app.post('/login', async (req, res) => {
-  const { name, password } = req.body;
+  app.get('/', (req, res) => {
+      res.sendFile(path.join(__dirname, 'index.html'));
+    });
 
-  try {
-    const result = await pool.query('SELECT * FROM users WHERE name = $1', [name]);
-    if (result.rows.length > 0) {
-      const user = result.rows[0];
-      const passwordMatch = await bcrypt.compare(password, user.password);
-      if (passwordMatch) {
+  pool.on('error', (err) => {
+    console.error('Database Error:', err);
+    res.status(500).json({ error: 'Database Error' });
+  });
+
+  // legit login without token
+  app.post('/login', async (req, res) => {
+    const { name, password } = req.body;
+
+    try {
+      const result = await pool.query('SELECT * FROM users WHERE name = ? AND password = ?', [name, password]);
+
+      if (result.length > 0) {
         res.json({ success: true });
       } else {
-        res.json({ success: false, message: 'Invalid password' });
+        res.json({ success: false, message: 'Invalid name or password' });
       }
-    } else {
-      res.json({ success: false, message: 'Invalid name' });
+    } catch (error) {
+      console.error('Error executing login request', error);
+      res.status(500).json({ error: 'Internal Server Error' });
     }
-  } catch (error) {
-    console.error('Error executing login request', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+  });
 
-// getting all users
-app.get('/users', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM users');
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Error executing query', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 
-// getting a specific user by ID
-app.get('/users/:id', async (req, res) => {
+  // getting all users
+  app.get('/users', async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM users');
+      res.json(result);
+    } catch (error) {
+      console.error('Error executing query', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
+  // getting a specific user by ID
+  app.get('/users/:id', async (req, res) => {
+    const userId = req.params.id;
+    try {
+      const result = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
+
+      if (result.length === 0) {
+        res.status(404).json({ error: 'User not found' });
+      } else {
+        res.json(result[0]);
+      }
+    } catch (error) {
+      console.error('Error executing query', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
+
+  // creating a new user
+  app.post('/users', async (req, res) => {
+    const { name, email, password } = req.body;
+    try {
+      const result = await pool.query('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', [name, email, password]);
+      res.status(201).json(result.insertId);
+    } catch (error) {
+      console.error('Error executing query', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
+  // updating a user
+  app.put('/users/:id', async (req, res) => {
   const userId = req.params.id;
-  try {
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
-    if (result.rows.length === 0) {
-      res.status(404).json({ error: 'User not found' });
-    } else {
-      res.json(result.rows[0]);
-    }
-  } catch (error) {
-    console.error('Error executing query', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-// creating a new user
-app.post('/users', async (req, res) => {
   const { name, email, password } = req.body;
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await pool.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *', [name, email, hashedPassword]);
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error('Error executing query', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+    const selectResult = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
 
-// updating a user
-app.put('/users/:id', async (req, res) => {
-  const userId = req.params.id;
-  const { name, email, password } = req.body;
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await pool.query('UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4 RETURNING *', [name, email, hashedPassword, userId]);
-    if (result.rows.length === 0) {
+    if (selectResult.length === 0) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const updateResult = await pool.query('UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?', [name, email, password, userId]);
+
+    if (updateResult.affectedRows === 0) {
       res.status(404).json({ error: 'User not found' });
     } else {
-      res.json(result.rows[0]);
+      const updatedUser = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
+      res.json(updatedUser[0]);
     }
   } catch (error) {
     console.error('Error executing query', error);
@@ -103,28 +144,41 @@ app.put('/users/:id', async (req, res) => {
   }
 });
 
-// deleting a user
-app.delete('/users/:id', async (req, res) => {
-  const userId = req.params.id;
-  try {
-    const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [userId]);
-    if (result.rows.length === 0) {
-      res.status(404).json({ error: 'User not found' });
-    } else {
-      res.json({ message: 'User deleted successfully' });
+
+  // deleting a user
+  app.delete('/users/:id', async (req, res) => {
+    const userId = req.params.id;
+    try {
+      const selectResult = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
+      if (selectResult.length === 0) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      const deleteResult = await pool.query('DELETE FROM users WHERE id = ?', [userId]);
+
+      if (deleteResult.affectedRows === 0) {
+        res.status(404).json({ error: 'User not found' });
+      } else {
+        res.json({ message: 'User deleted successfully' });
+      }
+    } catch (error) {
+      console.error('Error executing query', error);
+      res.status(500).json({ error: 'Internal Server Error' });
     }
-  } catch (error) {
-    console.error('Error executing query', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+  });
 
-// check if server is running
-app.get('/status', (req, res) => {
-  res.send('OK');
-});
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}/`);
-});
+  // check if server is running
+  app.get('/status', (req, res) => {
+    res.send('OK');
+  });
+
+  // Start the server
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}/`);
+  });
+
+}
+
+initializeApp();

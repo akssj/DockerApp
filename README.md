@@ -1,21 +1,21 @@
 # DockerApp intro
-![obraz](https://github.com/akssj/DockerApp/assets/127445850/588c5a9e-862c-4dfa-a59a-fb8151e17a4d)
+![obraz](https://github.com/akssj/DockerApp/assets/127445850/33ec762e-ac7f-4e7f-b132-d96b03f53559)
 
-Simple app for user managment, consists of two containers(nodeapp and postgresql server);
+Simple app for user managment, consists of two containers(nodeapp and mysql server);
 
 create, delete, modify, get by id or all users.
 
 Simple login.
 
 ## Tech
-node js, js, html, css, postgresql, sql, docker
+node js, js, html, css, mariadb, docker
 
 ## Launch
 ```sh
 docker compose up
 ```
 
-[http://localhost:3000](http://localhost:3000)
+[http://localhost:8080](http://localhost:8080)
 
 ## Credist
 Me aka Radosław Czyżowicz 40357
