@@ -36,6 +36,19 @@ function initializeApp() {
 
 function startServer() {
 
+  pool.query(`CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL
+  )`, (err, result) => {
+    if (err) {
+      console.error('Error creating users table:', err);
+    }else {
+      console.log('Table Created successfully');
+    }
+  });
+
   app.get('/', (req, res) => {
       res.sendFile(path.join(__dirname, 'index.html'));
     });
